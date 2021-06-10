@@ -3,6 +3,7 @@ package bjtu.zyj.redisspringbootstarter;
 import bjtu.zyj.redisspringbootstarter.bean.Item;
 import bjtu.zyj.redisspringbootstarter.bean.User;
 import bjtu.zyj.redisspringbootstarter.receiver.ChatMessageRecevier;
+import bjtu.zyj.redisspringbootstarter.service.DistributedLock;
 import bjtu.zyj.redisspringbootstarter.service.OrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -96,7 +99,26 @@ class RedisSpringbootStarterApplicationTests {
              }).start();
          }
          latch.await();
+
          System.out.println(count.get());
      }
 
+     @Autowired
+    DistributedLock lock;
+     @Test
+     public void testDistributedLock() throws Exception{
+         int num = 20000;
+         CountDownLatch latch = new CountDownLatch(num);
+         for (int i = 0; i < num; i++){
+             new Thread(() -> {
+                 try {
+                     lock.service();
+                 } catch (InterruptedException e) {
+                     e.printStackTrace();
+                 }
+                 latch.countDown();
+             }).start();
+         }
+         latch.await();
+     }
 }
